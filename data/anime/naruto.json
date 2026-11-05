@@ -1,0 +1,16 @@
+{
+  "id": "naruto",
+  "name": "Naruto",
+  "characters": [
+    {"name": "Naruto Uzumaki", "tier": 5, "image": ""},
+    {"name": "Sasuke Uchiha", "tier": 5},
+    {"name": "Itachi Uchiha", "tier": 5},
+    {"name": "Kakashi Hatake", "tier": 4},
+    {"name": "Jiraiya", "tier": 4},
+    {"name": "Gaara", "tier": 4},
+    {"name": "Rock Lee", "tier": 3},
+    {"name": "Shikamaru Nara", "tier": 3},
+    {"name": "Hinata Hyuga", "tier": 3},
+    {"name": "Konohamaru", "tier": 1}
+  ]
+}

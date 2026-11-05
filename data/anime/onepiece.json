@@ -1,0 +1,15 @@
+{
+  "id": "onepiece",
+  "name": "One Piece",
+  "characters": [
+    {"name": "Monkey D. Luffy", "tier": 5},
+    {"name": "Roronoa Zoro", "tier": 5},
+    {"name": "Sanji", "tier": 4},
+    {"name": "Trafalgar Law", "tier": 4},
+    {"name": "Portgas D. Ace", "tier": 4},
+    {"name": "Nami", "tier": 3},
+    {"name": "Usopp", "tier": 2},
+    {"name": "Tony Tony Chopper", "tier": 2},
+    {"name": "Buggy", "tier": 1}
+  ]
+}
