@@ -4,7 +4,7 @@ import { MercatoHost, TIER_PTS } from './games/mercato.js';
 
 const app = document.getElementById('app');
 const room = new Room();
-let game = null, S = null, me = null, endLocal = 0, animes = [], name = localStorage.mjName || '';
+let game = null, S = null, me = null, animes = [], name = localStorage.mjName || '';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 const pic = c => `<div class="pic">${c.image ? `<img src="${esc(c.image)}" alt="" onerror="this.remove()">` : esc(c.name[0])}</div>`;
@@ -30,7 +30,7 @@ async function home() {
     me = room.id;
     game = new MercatoHost({pool, budget: +document.getElementById('budget').value, slots: +document.getElementById('slots').value,
       send: s => { room.broadcast({t: 's', s}); setState(s); }});
-    room.onmsg = (d, id) => { if (d.t === 'join') game.join(id, d.name); if (d.t === 'bid') game.bid(id, d.amount); };
+    room.onmsg = (d, id) => { if (d.t === 'join') game.join(id, d.name); if (d.t === 'bid') game.bid(id, d.amount); if (d.t === 'pass') game.pass(id); };
     room.onleave = id => game.leave(id);
     game.join(me, getName());
   };
@@ -42,8 +42,10 @@ async function home() {
   };
 }
 
-function setState(s) { S = s; endLocal = Date.now() + s.ms; document.getElementById('roomtag').textContent = 'Salon ' + room.code; render(); }
+function setState(s) { S = s; document.getElementById('roomtag').textContent = 'Salon ' + room.code; render(); }
 function placeBid(inc) { const amt = S.bid + inc; room.isHost ? game.bid(me, amt) : room.send({t: 'bid', amount: amt}); }
+
+function pass() { room.isHost ? game.pass(me) : room.send({t: 'pass'}); }
 
 function render() {
   const mine = S.players.find(p => p.id === me);
@@ -60,11 +62,13 @@ function render() {
     app.innerHTML = `<section class="card lot"><h3>Lot ${S.n}/${S.total}</h3>${pic(c)}
       <h2>${esc(c.name)}</h2><div class="tm">${esc(c.anime)}</div><div class="tier">${stars(c.tier)}</div>
       ${auction ? `<div class="bid">${S.bid}M</div><div>${lead ? (lead.id === me ? '<b style="color:var(--ok)">Tu mènes</b>' : esc(lead.name)) : 'Aucune mise'}</div>
-      <div class="bar" id="bar"><i></i></div>` : `<div class="sold">${S.last.leader ? `Vendu à <b>${esc(S.last.leader)}</b> · ${S.last.price}M` : 'Invendu'}</div>`}</section>
+      <div class="tm">Ouvert par ${esc(S.players.find(p => p.id === S.opener)?.name)} (obligatoire à ${S.bid > 10 ? 10 : S.bid}M)</div>
+      <div>${S.turn === me ? '<b style="color:var(--ok)">À toi de jouer</b>' : 'Tour de ' + esc(S.players.find(p => p.id === S.turn)?.name || '')}</div>` : `<div class="sold">${S.last.leader ? `Vendu à <b>${esc(S.last.leader)}</b> · ${S.last.price}M` : 'Invendu'}</div>`}</section>
       ${auction ? `<section class="card"><div class="me">Ton solde : <b>${mine.budget}M</b> · ${mine.team.length}/${S.slots} persos</div>
-      <div class="row">${[10, 50, 100, 250].map(i => `<button data-i="${i}" ${full || S.bid + i > mine.budget || S.leader === me ? 'disabled' : ''}>+${i}</button>`).join('')}</div></section>` : ''}
+      <div class="row">${[10, 50, 100, 250].map(i => `<button data-i="${i}" ${S.turn !== me || S.bid + i > mine.budget ? 'disabled' : ''}>+${i}</button>`).join('')}<button class="ghost" id="pass" ${S.turn !== me ? 'disabled' : ''}>Passer</button></div></section>` : ''}
       <section class="card"><h3>Équipes</h3>${S.players.map(p => `<div class="pl ${p.id === me ? 'mine' : ''}"><span><b>${esc(p.name)}</b> · ${p.budget}M<br><span class="tm">${teamHtml(p.team)}</span></span></div>`).join('')}</section>`;
     app.querySelectorAll('[data-i]').forEach(b => b.onclick = () => placeBid(+b.dataset.i));
+    document.getElementById('pass')?.addEventListener('click', pass);
   } else {
     app.innerHTML = `<section class="card"><h2>Résultats de la draft</h2>${S.ranking.map((p, i) => `
       <div class="pl ${p.id === me ? 'mine' : ''}"><span>${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'} <b>${esc(p.name)}</b><br><span class="tm">${teamHtml(p.team)}</span></span><b>${p.score} pts</b></div>`).join('')}
@@ -73,12 +77,4 @@ function render() {
   }
 }
 
-(function loop() {
-  const bar = document.getElementById('bar');
-  if (bar && S?.phase === 'auction') {
-    const left = Math.max(0, endLocal - Date.now());
-    bar.firstElementChild.style.width = Math.min(100, left / 150) + '%'; bar.classList.toggle('low', left < 3000);
-  }
-  requestAnimationFrame(loop);
-})();
 home();
